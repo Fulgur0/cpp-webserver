@@ -66,8 +66,6 @@ int main()
         size_t endPos = request.find(' ', pos + 1);
         string path = request.substr(pos + 1, endPos - pos - 1);
 
-        cout << path << endl;
-
         string response = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n";
         string content = renderView(path, recvBuffer, getConfigMap());
         response += content;
