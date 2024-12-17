@@ -1,30 +1,33 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <unordered_map>
 #include "config.h"
 
-std::string openFile(const std::string &path)
+std::string openFile(const std::string &path, const std::unordered_map<std::string, std::string> &config)
 {
-    boost::json::value json_data = getConfig();
     std::ifstream file("public/" + path);
-    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    for (const auto &[key, value] : json_data.as_object())
+    if (!file.is_open())
     {
-        std::string placeholder = "ENV_" + std::string(key.data(), key.size());
+        throw std::runtime_error("Could not open file: " + path);
+    }
+    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    for (const auto &[key, value] : config)
+    {
+        std::string placeholder = "ENV_" + key;
         size_t pos = 0;
         while ((pos = content.find(placeholder, pos)) != std::string::npos)
         {
-            content.replace(pos, placeholder.length(), value.as_string().c_str());
-            pos += value.as_string().size();
+            content.replace(pos, placeholder.length(), value);
+            pos += value.size();
         }
     }
 
     return content;
 }
 
-std::string renderView(const std::string &path, const std::string &request)
+std::string renderView(const std::string &path, const std::string &request, const std::unordered_map<std::string, std::string> &config)
 {
-    boost::json::value json_data = getConfig();
     std::vector<std::string> headers;
     std::istringstream requestStream(request);
     std::string line;
@@ -33,12 +36,5 @@ std::string renderView(const std::string &path, const std::string &request)
         headers.push_back(line);
     }
 
-    if (path == "/")
-    {
-        return openFile("index.html");
-    }
-    else
-    {
-        return openFile("404.html");
-    }
+    return openFile(path == "/" ? "index.html" : "404.html", config);
 }
