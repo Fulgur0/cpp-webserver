@@ -3,18 +3,15 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <boost/json/src.hpp>
 #include <fstream>
 #include "routes.h"
+#include "config.h"
 
 using namespace std;
 
 int main()
 {
-    ifstream input("config.json");
-    std::stringstream buffer;
-    buffer << input.rdbuf();
-    boost::json::value json_data = boost::json::parse(buffer.str());
+    boost::json::value json_data = getConfig();
 
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     sockaddr_in serverAddress;
@@ -47,7 +44,7 @@ int main()
         string response = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n";
         string line;
 
-        string content = renderView(path);
+        string content = renderView(path, recvBuffer);
         response += content;
 
         send(clientSocket, response.c_str(), response.size(), 0);
